@@ -31,8 +31,7 @@ class ViewController: UIViewController {
         view.addSubview(lab)
         lab.snp.makeConstraints { (make) in
             make.center.equalToSuperview()
-            make.width.equalTo(100)
-            make.height.equalTo(50)
+            make.width.height.lessThanOrEqualToSuperview()
         }
         
 //        textSign.bind(to: lab.rx.text).disposed(by: disposeBag)
@@ -48,8 +47,13 @@ class ViewController: UIViewController {
         viewModel = ViewModel(model)
         viewModel?.titleObservable?.bind(to: lab.rx.text).disposed(by: disposeBag)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             model.title = "title 222222"
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            let resNum = self.bigNumberSummation(number: "111111111111111111111111111111111111111111111111111111", num2: "1111111111111111111111111111111111111111111111111111111")
+            model.title = resNum
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
@@ -61,14 +65,13 @@ class ViewController: UIViewController {
             self.text(number: 1111, count: 22222)
         }
         
+        
         self.rx.methodInvoked(#selector(text(number:count:))).subscribe { (event) in
             print("\(String(describing: event.element?[0]))")
         }.disposed(by: disposeBag)
         
         applicationStateChangeObservable()
-        
-        let resNum = bigNumberSummation(number: "111111111111111111111111111111111111111111111111111111", num2: "1111111111111111111111111111111111111111111111111111111")
-        print(resNum)
+    
     }
     
     @objc dynamic func text(number num:Int, count:Int) {
