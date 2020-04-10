@@ -14,9 +14,7 @@ class TestViewController: UIViewController, Bindable {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let tableView = UILabel()
-        tableView.rx.textColor
+
     }
 
 }

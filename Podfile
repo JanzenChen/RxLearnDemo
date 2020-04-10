@@ -13,11 +13,10 @@ target 'RxDemo' do
     pod 'RxCocoa'
     pod 'RxDataSources'
 #Net
-#    pod 'Alamofire'
+    pod 'Alamofire'
 #Core
     pod 'Then'
     pod "RxGesture"
-
 #UI
     pod 'SnapKit'
 

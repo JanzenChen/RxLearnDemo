@@ -13,11 +13,15 @@ class ViewController: UIViewController {
     var disposeBag = DisposeBag()
     var viewModel : ViewModel?
     
+    func MaxA(a : String) -> Bool {
+        return a > "3"
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         view.backgroundColor = .white
-//        let textSign : BehaviorRelay<String> = BehaviorRelay(value: "Text")
+        let textSign : BehaviorRelay<String> = BehaviorRelay(value: "Text")
         
         let lab = UILabel().then {
             $0.textColor = .red
@@ -28,16 +32,29 @@ class ViewController: UIViewController {
             $0.layer.borderWidth = 2
         }
         
+        let a1 : String? = "4"
+        let a2 : Int = 5
+        
+        if let a = a1 , 4 != a2 {
+            print("---> 111111 a == \(a)")
+        }
+        
+        if let a = a1 , MaxA(a: a) {
+            print("---> 222222")
+        }
+        
+        
+        
         view.addSubview(lab)
         lab.snp.makeConstraints { (make) in
             make.center.equalToSuperview()
             make.width.height.lessThanOrEqualToSuperview()
         }
         
-//        textSign.bind(to: lab.rx.text).disposed(by: disposeBag)
+        textSign.bind(to: lab.rx.text).disposed(by: disposeBag)
         //每个一秒发出一个索引  map ---bind  进行绑定
-//        let obserable1 = Observable<Int>.interval(1, scheduler: MainScheduler.instance)
-//        obserable1.map{"当前索引:\($0)"}.bind(to: textSign).disposed(by: disposeBag)
+        let obserable1 = Observable<Int>.interval(1, scheduler: MainScheduler.instance)
+        obserable1.map{"当前索引:\($0)"}.bind(to: textSign).disposed(by: disposeBag)
 
         let model = Model().then {
             $0.title = "title 1111"

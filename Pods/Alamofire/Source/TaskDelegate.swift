@@ -26,6 +26,8 @@ import Foundation
 
 /// The task delegate is responsible for handling all delegate callbacks for the underlying task as well as
 /// executing all operations attached to the serial operation queue upon task completion.
+///基类,请求数据接收代理; 代理负责处理底层请求任务的所有委托回调
+///在请求任务完成时执行附加到串行操作队列的所有操作。
 open class TaskDelegate: NSObject {
 
     // MARK: Properties
@@ -182,8 +184,7 @@ open class TaskDelegate: NSObject {
     }
 }
 
-// MARK: -
-
+// MARK: - 普通数据请求数据代理
 class DataTaskDelegate: TaskDelegate, URLSessionDataDelegate {
 
     // MARK: Properties
@@ -232,7 +233,8 @@ class DataTaskDelegate: TaskDelegate, URLSessionDataDelegate {
     var dataTaskDidBecomeDownloadTask: ((URLSession, URLSessionDataTask, URLSessionDownloadTask) -> Void)?
     var dataTaskDidReceiveData: ((URLSession, URLSessionDataTask, Data) -> Void)?
     var dataTaskWillCacheResponse: ((URLSession, URLSessionDataTask, CachedURLResponse) -> CachedURLResponse?)?
-
+    
+    // URLSessionDataDelegate代理方法 : 当前data请求的task接收数据完成
     func urlSession(
         _ session: URLSession,
         dataTask: URLSessionDataTask,
@@ -249,7 +251,8 @@ class DataTaskDelegate: TaskDelegate, URLSessionDataDelegate {
 
         completionHandler(disposition)
     }
-
+    
+    // URLSessionDataDelegate代理方法 : 当前data请求转换为下载请求
     func urlSession(
         _ session: URLSession,
         dataTask: URLSessionDataTask,
@@ -257,23 +260,24 @@ class DataTaskDelegate: TaskDelegate, URLSessionDataDelegate {
     {
         dataTaskDidBecomeDownloadTask?(session, dataTask, downloadTask)
     }
-
+    
+    // URLSessionDataDelegate代理方法 : 当前请求的task接收到数据(数据可能是不连贯的,一片片的,这里需要做数据拼接)
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         if initialResponseTime == nil { initialResponseTime = CFAbsoluteTimeGetCurrent() }
 
         if let dataTaskDidReceiveData = dataTaskDidReceiveData {
-            dataTaskDidReceiveData(session, dataTask, data)
+            dataTaskDidReceiveData(session, dataTask, data) // 如果外部有自己的处理,扔给外部
         } else {
-            if let dataStream = dataStream {
+            if let dataStream = dataStream { // 如果是数据流的自定义处理,扔给外部
                 dataStream(data)
             } else {
-                mutableData.append(data)
+                mutableData.append(data) // 数据拼接
             }
-
+            // 进度计算
             let bytesReceived = Int64(data.count)
             totalBytesReceived += bytesReceived
             let totalBytesExpected = dataTask.response?.expectedContentLength ?? NSURLSessionTransferSizeUnknown
-
+            
             progress.totalUnitCount = totalBytesExpected
             progress.completedUnitCount = totalBytesReceived
 
@@ -282,7 +286,7 @@ class DataTaskDelegate: TaskDelegate, URLSessionDataDelegate {
             }
         }
     }
-
+    // URLSessionDataDelegate代理方法 : 当前请求的task将要缓存请求结果
     func urlSession(
         _ session: URLSession,
         dataTask: URLSessionDataTask,
@@ -299,8 +303,7 @@ class DataTaskDelegate: TaskDelegate, URLSessionDataDelegate {
     }
 }
 
-// MARK: -
-
+// MARK: - 下载请求数据代理
 class DownloadTaskDelegate: TaskDelegate, URLSessionDownloadDelegate {
 
     // MARK: Properties
@@ -416,8 +419,7 @@ class DownloadTaskDelegate: TaskDelegate, URLSessionDownloadDelegate {
     }
 }
 
-// MARK: -
-
+// MARK: - 上传请求数据代理
 class UploadTaskDelegate: DataTaskDelegate {
 
     // MARK: Properties

@@ -100,9 +100,9 @@ extension URLRequest {
         let url = try url.asURL()
 
         self.init(url: url)
-
+        //绑定该URLRequest请求的请求方式
         httpMethod = method.rawValue
-
+        // 设置请求头
         if let headers = headers {
             for (headerField, headerValue) in headers {
                 setValue(headerValue, forHTTPHeaderField: headerField)
@@ -111,8 +111,9 @@ extension URLRequest {
     }
 
     func adapt(using adapter: RequestAdapter?) throws -> URLRequest {
+        //设置公共参数
         guard let adapter = adapter else { return self }
-        return try adapter.adapt(self)
+        return try adapter.adapt(self) // adapt 为遵循RequestAdapter协议的类必须实现的方法,在方法中可以用request.setValue设定请求参数
     }
 }
 

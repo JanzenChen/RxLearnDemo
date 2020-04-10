@@ -235,6 +235,7 @@ open class SessionManager {
 
         do {
             originalRequest = try URLRequest(url: url, method: method, headers: headers)
+            // 编码请求参数
             let encodedURLRequest = try encoding.encode(originalRequest!, with: parameters)
             return request(encodedURLRequest)
         } catch {
@@ -255,13 +256,17 @@ open class SessionManager {
 
         do {
             originalRequest = try urlRequest.asURLRequest()
+            // 这里转一下,事实是为了能调用task方法
             let originalTask = DataRequest.Requestable(urlRequest: originalRequest!)
-
+            // 异步执行请求,接口返回的URLSessionTask
             let task = try originalTask.task(session: session, adapter: adapter, queue: queue)
+            // 绑定请求,给请求设定数据代理
             let request = DataRequest(session: session, requestTask: .data(originalTask, task))
 
+            //下标脚本语法及应用 详见 subscript ,delegate[task]事实是requests[task.taskIdentifier],前置做了加锁处理,之后利用defer的特性,在return前执行defer开锁
             delegate[task] = request
-
+            
+            //是否在构建后立即启动请求。“真正的”默认情况下。
             if startRequestsImmediately { request.resume() }
 
             return request

@@ -169,7 +169,7 @@ open class SessionDelegate: NSObject {
     /// Access the task delegate for the specified task in a thread-safe manner.
     open subscript(task: URLSessionTask) -> Request? {
         get {
-            lock.lock() ; defer { lock.unlock() }
+            lock.lock() ; defer { lock.unlock() } // defer 在return前一刻执行
             return requests[task.taskIdentifier]
         }
         set {

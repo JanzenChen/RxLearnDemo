@@ -6,10 +6,17 @@
 //  Copyright © 2019 JanzenMacmini. All rights reserved.
 //
 
+//Rx
 @_exported import RxSwift
 @_exported import RxCocoa
-@_exported import SnapKit
 @_exported import RxDataSources
 
-@_exported import Then
+//Net
+@_exported import Alamofire
 
+//Core
+@_exported import Then
+@_exported import RxGesture
+
+//UI
+@_exported import SnapKit

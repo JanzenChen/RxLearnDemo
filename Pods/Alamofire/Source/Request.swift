@@ -130,7 +130,7 @@ open class Request {
 
         switch requestTask {
         case .data(let originalTask, let task):
-            taskDelegate = DataTaskDelegate(task: task)
+            taskDelegate = DataTaskDelegate(task: task) // 设定请求任务的数据代理
             self.originalTask = originalTask
         case .download(let originalTask, let task):
             taskDelegate = DownloadTaskDelegate(task: task)
@@ -144,7 +144,7 @@ open class Request {
         }
 
         delegate.error = error
-        delegate.queue.addOperation { self.endTime = CFAbsoluteTimeGetCurrent() }
+        delegate.queue.addOperation { self.endTime = CFAbsoluteTimeGetCurrent() } // 添加队列任务
     }
 
     // MARK: Authentication
@@ -196,12 +196,13 @@ open class Request {
 
     /// Resumes the request.
     open func resume() {
+        // delegate.queue.isSuspended -> 请求线程暂停,即详单于取消了请求
         guard let task = task else { delegate.queue.isSuspended = false ; return }
-
+        // 记录当前开始的请求时间
         if startTime == nil { startTime = CFAbsoluteTimeGetCurrent() }
-
+        // 请求开始执行
         task.resume()
-
+        // 发布 请求开始 通知org.alamofire.notification.name.task.didResume
         NotificationCenter.default.post(
             name: Notification.Name.Task.DidResume,
             object: self,
@@ -357,8 +358,9 @@ open class DataRequest: Request {
 
         func task(session: URLSession, adapter: RequestAdapter?, queue: DispatchQueue) throws -> URLSessionTask {
             do {
+                // adapt 设置公共参数
                 let urlRequest = try self.urlRequest.adapt(using: adapter)
-                return queue.sync { session.dataTask(with: urlRequest) }
+                return queue.sync { session.dataTask(with: urlRequest) } // 队列异步请求任务
             } catch {
                 throw AdaptError(error: error)
             }

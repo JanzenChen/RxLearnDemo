@@ -27,6 +27,7 @@ import Foundation
 /// HTTP method definitions.
 ///
 /// See https://tools.ietf.org/html/rfc7231#section-4.3
+// 用枚举列举了请求方法，并且用大写的形式指定了rawValue
 public enum HTTPMethod: String {
     case options = "OPTIONS"
     case get     = "GET"
@@ -84,6 +85,9 @@ public struct URLEncoding: ParameterEncoding {
     ///                    requests and sets as the HTTP body for requests with any other HTTP method.
     /// - queryString:     Sets or appends encoded query string result to existing query string.
     /// - httpBody:        Sets encoded query string result as the HTTP body of the URL request.
+    // methodDependent: 由请求方法自己决定，`GET`, `HEAD` 和 `DELETE`直接拼接到请求url中，其他方法放到HTTP body
+    // queryString: 直接拼接到请求url中
+    // httpBody: 放到HTTP body
     public enum Destination {
         case methodDependent, queryString, httpBody
     }
@@ -98,9 +102,9 @@ public struct URLEncoding: ParameterEncoding {
 
         func encode(key: String) -> String {
             switch self {
-            case .brackets:
+            case .brackets: // 添加括号
                 return "\(key)[]"
-            case .noBrackets:
+            case .noBrackets: // 不添加括号
                 return key
             }
         }
@@ -115,9 +119,9 @@ public struct URLEncoding: ParameterEncoding {
 
         func encode(value: Bool) -> String {
             switch self {
-            case .numeric:
+            case .numeric: // 数字
                 return value ? "1" : "0"
-            case .literal:
+            case .literal:  // 文字
                 return value ? "true" : "false"
             }
         }
@@ -172,25 +176,28 @@ public struct URLEncoding: ParameterEncoding {
     ///
     /// - returns: The encoded request.
     public func encode(_ urlRequest: URLRequestConvertible, with parameters: Parameters?) throws -> URLRequest {
-        var urlRequest = try urlRequest.asURLRequest()
-
+        var urlRequest = try urlRequest.asURLRequest() // URLRequest的拓展遵循了URLRequestConvertible,以try处理可以抛异常
+        //如果没有请求参数,直接返回
         guard let parameters = parameters else { return urlRequest }
-
+        // encodesParametersInURL 该请求方法是否需要加密参数 - 只有拼接参数在url后的模式,或者get,head,delete三种请求方式才会把参数拼接到url中
         if let method = HTTPMethod(rawValue: urlRequest.httpMethod ?? "GET"), encodesParametersInURL(with: method) {
+            // 请求URL不存在
             guard let url = urlRequest.url else {
+                // 抛出 缺失请求URL异常
                 throw AFError.parameterEncodingFailed(reason: .missingURL)
             }
-
+            // 用url 生成 URLComponents,在生成成功且加密参数不为空才进行加密处理
             if var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false), !parameters.isEmpty {
                 let percentEncodedQuery = (urlComponents.percentEncodedQuery.map { $0 + "&" } ?? "") + query(parameters)
-                urlComponents.percentEncodedQuery = percentEncodedQuery
-                urlRequest.url = urlComponents.url
+                urlComponents.percentEncodedQuery = percentEncodedQuery // 重设编码后的url请求参数
+                urlRequest.url = urlComponents.url // 重设请求url,其中只有请求参数encode变化,其他未变
             }
         } else {
+            // 参数携带在请求体中的请求方式
             if urlRequest.value(forHTTPHeaderField: "Content-Type") == nil {
                 urlRequest.setValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
             }
-
+            // 设置参数请求提
             urlRequest.httpBody = query(parameters).data(using: .utf8, allowLossyConversion: false)
         }
 
@@ -205,17 +212,20 @@ public struct URLEncoding: ParameterEncoding {
     /// - returns: The percent-escaped, URL encoded query string components.
     public func queryComponents(fromKey key: String, value: Any) -> [(String, String)] {
         var components: [(String, String)] = []
-
+        // key所指向的数据类型为字典
         if let dictionary = value as? [String: Any] {
             for (nestedKey, value) in dictionary {
+                // 递归本字典,且key为 "key[nestedKey]"
                 components += queryComponents(fromKey: "\(key)[\(nestedKey)]", value: value)
             }
         } else if let array = value as? [Any] {
             for value in array {
+                // 递归数组,且encode是否添加[]
                 components += queryComponents(fromKey: arrayEncoding.encode(key: key), value: value)
             }
         } else if let value = value as? NSNumber {
             if value.isBool {
+                // escape 过滤特殊字符
                 components.append((escape(key), escape(boolEncoding.encode(value: value.boolValue))))
             } else {
                 components.append((escape(key), escape("\(value)")))
@@ -243,6 +253,10 @@ public struct URLEncoding: ParameterEncoding {
     /// - parameter string: The string to be percent-escaped.
     ///
     /// - returns: The percent-escaped string.
+    // 对字符串进行百分号编码。
+    // 下面这些分隔符保留原字符串：
+    // - General Delimiters: ":", "#", "[", "]", "@"
+    // - Sub-Delimiters: "!", "$", "&", "'", "(", ")", "*", "+", ",", ";", "="
     public func escape(_ string: String) -> String {
         let generalDelimitersToEncode = ":#[]@" // does not include "?" or "/" due to RFC 3986 - Section 3.4
         let subDelimitersToEncode = "!$&'()*+,;="
@@ -286,20 +300,23 @@ public struct URLEncoding: ParameterEncoding {
     }
 
     private func query(_ parameters: [String: Any]) -> String {
+        // 元祖数组 - 这里不用字典,可以必变字典的去重,不破坏外部传入,也方便使用map,毕竟map比 for (key,value) in components {} 简短的多
         var components: [(String, String)] = []
-
+        // 这里把key做了按字母升序排序
         for key in parameters.keys.sorted(by: <) {
             let value = parameters[key]!
+            // += 数组的重载操作符, 把两个数组相加为一个,等价多次append
             components += queryComponents(fromKey: key, value: value)
         }
+        // 将key=value用map拼接,之后把所有的参数用&拼成字符串 $0 元祖的第一个值, $1 元祖的第二个值
         return components.map { "\($0)=\($1)" }.joined(separator: "&")
     }
 
     private func encodesParametersInURL(with method: HTTPMethod) -> Bool {
         switch destination {
-        case .queryString:
+        case .queryString: //直接拼接到请求url中
             return true
-        case .httpBody:
+        case .httpBody: // 在请求体中
             return false
         default:
             break
