@@ -21,7 +21,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .white
-        let textSign : BehaviorRelay<String> = BehaviorRelay(value: "Text")
+//        let textSign : BehaviorRelay<String> = BehaviorRelay(value: "Text")
         
         let lab = UILabel().then {
             $0.textColor = .red
@@ -51,10 +51,10 @@ class ViewController: UIViewController {
             make.width.height.lessThanOrEqualToSuperview()
         }
         
-        textSign.bind(to: lab.rx.text).disposed(by: disposeBag)
-        //每个一秒发出一个索引  map ---bind  进行绑定
-        let obserable1 = Observable<Int>.interval(1, scheduler: MainScheduler.instance)
-        obserable1.map{"当前索引:\($0)"}.bind(to: textSign).disposed(by: disposeBag)
+//        textSign.bind(to: lab.rx.text).disposed(by: disposeBag)
+//        //每个一秒发出一个索引  map ---bind  进行绑定
+//        let obserable1 = Observable<Int>.interval(1, scheduler: MainScheduler.instance)
+//        obserable1.map{"当前索引:\($0)"}.bind(to: textSign).disposed(by: disposeBag)
 
         let model = Model().then {
             $0.title = "title 1111"
@@ -69,18 +69,18 @@ class ViewController: UIViewController {
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            let resNum = self.bigNumberSummation(number: "111111111111111111111111111111111111111111111111111111", num2: "1111111111111111111111111111111111111111111111111111111")
+            let resNum = self.bigNumberSummation(number: "123456789", num2: "987654321")
             model.title = resNum
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
-            let mod = Model().then {
-                $0.title = "title 3333"
-                $0.name = "name 3333"
-            }
-            self.viewModel?.updateModel(withModel: mod)
-            self.text(number: 1111, count: 22222)
-        }
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
+//            let mod = Model().then {
+//                $0.title = "title 3333"
+//                $0.name = "name 3333"
+//            }
+//            self.viewModel?.updateModel(withModel: mod)
+//            self.text(number: 1111, count: 22222)
+//        }
         
         
         self.rx.methodInvoked(#selector(text(number:count:))).subscribe { (event) in
@@ -123,17 +123,20 @@ class ViewController: UIViewController {
         // 各位相加逻辑
         var carryBit = 0;
         var sum : [Character] = [];
-        for i in 0 ..< maxLen {
-            let a = Int(String(str1[i]))!
-            let b = Int(String(str2[i]))!
+        for i in 0 ... maxLen {
+            var a = 0
+            var b = 0
+            
+            if i != maxLen {
+                a = Int(String(str1[i]))!
+                b = Int(String(str2[i]))!
+            }
             
             var s = a + b + carryBit;
-            if s >= 10 { // 进一位
-                s -= 10
-                carryBit = 1
-            } else {
-                carryBit = 0
-            }
+            // 进位计算
+            carryBit = Int(s / 10)
+            s -= (carryBit * 10);
+            
             sum.append(contentsOf: String(s)) // 记录当前位的结果
         }
         
