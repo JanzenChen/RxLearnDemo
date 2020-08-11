@@ -340,7 +340,7 @@ extension Rx {
         let subject1 = BehaviorSubject(value: "A")
         let subject2 = BehaviorSubject(value: "1")
         let subject3 = BehaviorSubject(value: "①")
-         
+         // BehaviorRelay和BehaviorSubject差不多，但是收到error or completed后依然继续
         let subjectTotal = BehaviorRelay(value: subject1)
          
         subjectTotal.asObservable()

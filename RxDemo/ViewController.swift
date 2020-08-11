@@ -20,6 +20,10 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if "janzen@janzen.sina.cn" =~ "^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$" {
+            print("有效的邮箱地址")
+        }
+        
         view.backgroundColor = .white
 //        let textSign : BehaviorRelay<String> = BehaviorRelay(value: "Text")
         
@@ -31,8 +35,8 @@ class ViewController: UIViewController {
             $0.sizeToFit()
             $0.layer.borderWidth = 2
         }
-        
         let a1 : String? = "4"
+        
         let a2 : Int = 5
         
         if let a = a1 , 4 != a2 {

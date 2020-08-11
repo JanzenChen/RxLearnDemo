@@ -7,3 +7,7 @@
 //
 
 #include "c_func_test.h"
+
+int test(int a){
+    return a + 1;
+}

@@ -16,7 +16,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        window?.rootViewController = ViewController()
+//        window?.rootViewController = ViewController()
+//        window?.rootViewController = TabBarViewController()
+//        window?.rootViewController = TestViewController()
+        
+        window?.rootViewController = UINavigationController(rootViewController: Demo1ViewController())
         window?.makeKeyAndVisible()
         
         return true
